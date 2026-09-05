@@ -31,6 +31,25 @@ is admitted only inside three load-bearing invariants:
   budget force a safe-stop/autonomy-fallback; safety-rated + hard-RT live actuation near humans is
   R5/Lv7+.
 
+**Where admission is decided.** One place: `src/tazuna/governor.cljc`, adjudicating against the
+command catalogue in `src/tazuna/operation.cljc`. It is deny-by-default — a command kind the
+catalogue does not name is refused, so N1's "weaponizable is unrepresentable" is a property of the
+vocabulary rather than a list of forbidden words. The refusal order mirrors
+`methods/teleop_safety.kotoba`, the canonical kernel, and each refusal carries that kernel's code
+(G4 server signature 12 · N1 uncatalogued 14 · N1 force class 10 · G3 unauthorized 11 · G4 member
+signature 13). Safety commands (`halt` / `estop` / `handback`) are exempt from the force-class, G3
+and signature gates — they are what you reach for when those have already failed — but not from the
+catalogue.
+
+Until 2026-09-06 the gates were inline in each transition instead, so entering the cell at
+`transition-relay-command` skipped whatever the earlier transitions carried: measured against
+`f180a77`, the kinds `weaponize`, `detonate` and `""` all relayed as member-signed actuation with
+`onChainAnchored true`, as did a session that was never force-authorized and one whose force class
+was `weaponizable`. The lexicon, the reasoner and the Kotoba kernel each refused all of them; only
+the cell — the part that actually relays — did not, and nothing compared the four. The parity is now
+asserted by `tazuna.governor-test/the-cell-refuses-exactly-what-the-reasoner-refuses` and by the
+lexicon-projection test beside it.
+
 Plus: force class `:weaponizable` is **structurally unrepresentable** (N1); demonstrations are the
 member's own labour — encrypted, consent-bound, `cash≡0` (G8/N8); home teleop is on-device-only with
 no cloud video / biometric capture (G9, inherited from kiyome); Murakumo-only (G5); policies fit the
@@ -47,10 +66,13 @@ Open-RMF (Apache-2.0), and the Boston Dynamics Orbit REST/gRPC call *shapes* as 
 ## Build / test
 
 ```
-cd methods && PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python3 -m pytest   # teleop-safety reasoner (23 tests, incl. satellite-link hysteresis)
-cd cells   && PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python3 -m pytest   # teleop_session state machine (14 tests, incl. satellite-link hysteresis)
-python3 methods/teleop_safety.py                                   # offline safety-reasoner demo
+clojure -Sdeps '{:paths ["." "src" "test"]}' -M -e '(load-file "run_tests.clj")'   # all 6 suites
+clojure -M:lint                                                                    # clj-kondo
 ```
+
+`clojure -M:test` alone runs only the two `*-test` namespaces the cognitect runner
+matches under `test/`; the charter-gate, reasoner and state-machine suites are
+reached through `run_tests.clj`, which names all six explicitly.
 
 R0 = design + the `teleop_safety` reasoner + the `teleop_session` state-machine + a `:representative`
 fleet seed. **No hardware, no live robot link, no live actuation** — every adapter call is gated
