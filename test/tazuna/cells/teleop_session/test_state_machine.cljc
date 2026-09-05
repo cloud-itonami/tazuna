@@ -6,6 +6,11 @@
 
 (defn- wrap [cell-state] {"cell_state" cell-state})
 
+;; NOTE: the relay fixtures below carry a "force_auth_ref" because the Governor
+;; refuses an unauthorized actuation at G3 (tazuna.governor-test covers that
+;; refusal directly). Without it these tests would still pass — by being refused
+;; for a reason they do not name — which is the failure mode they exist to avoid.
+
 ;; ── R0 invariant: solve() raises ──
 (deftest test-solve-raises-at-r0
   (is (thrown? clojure.lang.ExceptionInfo (sm/solve {}))))
@@ -43,10 +48,11 @@
 
 (deftest test-relay-actuation-requires-member-sig
   (is (thrown? clojure.lang.ExceptionInfo
-               (sm/transition-relay-command (wrap {"command_kind" "move" "member_sig" ""})))))
+               (sm/transition-relay-command (wrap {"command_kind" "move" "member_sig" ""
+                                                   "force_auth_ref" "forceauth:ok"})))))
 
 (deftest test-relay-nominal-actuation-passes-dry-run
-  (let [out (sm/transition-relay-command (wrap {"command_kind" "move" "member_sig" "m"
+  (let [out (sm/transition-relay-command (wrap {"command_kind" "move" "member_sig" "m" "force_auth_ref" "forceauth:ok"
                                                 "observed_latency_ms" 10 "latency_budget_ms" 150 "deadman_ms" 300}))
         cmd (get-in out ["cell_state" "payload" "command"])]
     (is (= "nominal" (get cmd "safeState")))
@@ -55,7 +61,7 @@
     (is (= sm/phase-command-relayed (get-in out ["cell_state" "phase"])))))
 
 (deftest test-relay-deadman-lapse-drops-to-safe-stop
-  (let [out (sm/transition-relay-command (wrap {"command_kind" "move" "member_sig" "m"
+  (let [out (sm/transition-relay-command (wrap {"command_kind" "move" "member_sig" "m" "force_auth_ref" "forceauth:ok"
                                                 "elapsed_since_presence_ms" 999 "deadman_ms" 300}))
         cmd (get-in out ["cell_state" "payload" "command"])]
     (is (= "halt" (get cmd "kind")))

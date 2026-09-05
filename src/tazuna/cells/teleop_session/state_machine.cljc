@@ -17,12 +17,16 @@
 
   Conventions: dataclass SessionState → a plain map with the SAME string field keys the Python
   `cs.__dict__` round-trips; phase enum value identities stay strings; ValueError → ex-info."
-  (:require [clojure.string :as str]))
+  (:require [clojure.string :as str]
+            [tazuna.governor :as governor]
+            [tazuna.operation :as op]))
 
 (def member "member")
 (def encref-prefix "encref:")
-(def admitted-force-classes #{"observational" "soft-actuation" "powered-actuation"})
-(def always-permitted #{"halt" "estop" "handback"})   ; safety commands never gated
+;; Vocabulary comes from the catalogue, not a local copy — the divergence this
+;; namespace shipped until 2026-09-06 came from holding its own opinion of it.
+(def admitted-force-classes op/force-classes)
+(def always-permitted (set (filter op/always-permitted? (op/command-kinds))))
 
 ;; ── SessionPhase (enum — Python value identities preserved) ──
 (def session-phases
@@ -108,33 +112,51 @@
     :else "nominal"))
 
 (defn transition-relay-command
-  "G4/G10: relay a member-signed command, but force a safe-stop on any supervision breach.
-  A safety command (halt/estop/handback) is always permitted. An actuation command requires a
-  member signature, refuses any server signature, and is dropped to a safe-stop on deadman/latency breach."
+  "G3/G4/G10/N1: adjudicate the request with the independent Governor, then relay.
+
+  The Governor (`tazuna.governor/adjudicate`) owns admission and is deny-by-default;
+  this transition owns only what happens AFTER admission — the soft-RT supervision
+  verdict. Before 2026-09-06 the gates were inline here, which meant entering the
+  cell at this transition skipped every check the earlier transitions carried: an
+  uncatalogued kind (\"weaponize\", \"detonate\", \"\"), an unauthorized session
+  (force_auth_ref \"\") and an unrepresentable force class all relayed as
+  member-signed actuation with onChainAnchored true. Each is refused by
+  methods/teleop_safety.kotoba, so the cell now agrees with its own kernel.
+
+  A safety command (halt/estop/handback) is still always permitted and never
+  signed. An admitted actuation command is still dropped to a safe-stop on a
+  deadman/latency breach."
   [state]
   (let [cs (cell-state state)
         cs (assoc cs
                   "command_kind" (get state "command_kind" (get cs "command_kind"))
                   "member_sig" (get state "member_sig" (get cs "member_sig"))
                   "server_sig" (get state "server_sig" (get cs "server_sig"))
+                  "force_class" (get state "force_class" (get cs "force_class"))
+                  "force_auth_ref" (get state "force_auth_ref" (get cs "force_auth_ref"))
                   "elapsed_since_presence_ms" (get state "elapsed_since_presence_ms" (get cs "elapsed_since_presence_ms"))
-                  "observed_latency_ms" (get state "observed_latency_ms" (get cs "observed_latency_ms")))]
-    (when (seq (get cs "server_sig"))
-      (throw (ex-info "G4 violation: server signature refused (no-server-key, ADR-2605231525)" {:gate "G4"})))
+                  "observed_latency_ms" (get state "observed_latency_ms" (get cs "observed_latency_ms")))
+        decision (governor/adjudicate
+                  {:kind           (get cs "command_kind")
+                   :force-class    (get cs "force_class")
+                   :force-auth-ref (get cs "force_auth_ref")
+                   :member-sig     (get cs "member_sig")
+                   :server-sig     (get cs "server_sig")})]
+    (when-not (governor/admitted? decision)
+      (throw (ex-info (str (:gate decision) " violation: " (:detail decision))
+                      {:gate (:gate decision)
+                       :code (:code decision)
+                       :kernel-code (:kernel-code decision)})))
     (let [verdict (safe-state cs)
           kind (get cs "command_kind")]
       (cond
         ;; Safety commands are always honoured, signature-free.
-        (contains? always-permitted kind)
+        (:safety? decision)
         (let [phase (if (not= kind "handback") phase-safe-stopped phase-command-relayed)
               cs (assoc cs "phase" phase
                         "payload" (assoc (get cs "payload") "command"
                                          {"kind" kind "safeState" verdict "memberSigned" false}))]
           {"cell_state" cs "next_node" "end"})
-
-        ;; Actuation commands require a member signature (G4).
-        (not (seq (get cs "member_sig")))
-        (throw (ex-info "G4 violation: member signature required to relay an actuation command" {:gate "G4"}))
 
         ;; G10: a supervision breach forces a safe-stop/autonomy-fallback instead of actuating.
         (not= verdict "nominal")
