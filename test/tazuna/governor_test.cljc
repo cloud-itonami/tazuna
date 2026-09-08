@@ -12,7 +12,7 @@
   the defect this file was written for: three implementations of the teleop
   vocabulary agreed, the fourth did not, and nothing compared them."
   (:require [clojure.test :refer [deftest is]]
-            [clojure.string :as str]
+            [kotoba.lang.text :as str]
             [tazuna.governor :as governor]
             [tazuna.operation :as op]
             [tazuna.methods.teleop-safety :as ts]

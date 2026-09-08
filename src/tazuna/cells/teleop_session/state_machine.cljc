@@ -17,7 +17,7 @@
 
   Conventions: dataclass SessionState → a plain map with the SAME string field keys the Python
   `cs.__dict__` round-trips; phase enum value identities stay strings; ValueError → ex-info."
-  (:require [clojure.string :as str]
+  (:require [kotoba.lang.text :as str]
             [tazuna.governor :as governor]
             [tazuna.operation :as op]))
 
