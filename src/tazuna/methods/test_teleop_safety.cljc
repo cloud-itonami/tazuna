@@ -4,7 +4,7 @@
   1:1 Clojure port of `20-actors/tazuna/methods/test_teleop_safety.py`.
   Stdlib + clojure.test only. Parametrized Python cases are expanded into
   separate `(is ...)` forms."
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require [kotoba.lang.text] [clojure.test :refer [deftest is testing]]
             [tazuna.methods.teleop-safety :as sut]))
 
 (def ^:private AUTHORIZED
@@ -64,7 +64,7 @@
     (is (= (:safe-state v) "autonomy-fallback"))
     (is (= (:actuates v) false))
     (is (= (:effective-kind v) "halt"))
-    (is (clojure.string/includes? (:reason v) "deadman"))))
+    (is (kotoba.lang.text/includes? (:reason v) "deadman"))))
 
 (deftest test-latency-breach-forces-autonomy-fallback-halt
   (let [v (sut/evaluate (sut/command "move" {:member-sig "m:sig" :observed-latency-ms 400})
@@ -72,14 +72,14 @@
     (is (= (:safe-state v) "autonomy-fallback"))
     (is (= (:actuates v) false))
     (is (= (:effective-kind v) "halt"))
-    (is (clojure.string/includes? (:reason v) "latency"))))
+    (is (kotoba.lang.text/includes? (:reason v) "latency"))))
 
 (deftest test-deadman-takes-priority-over-latency
   (let [v (sut/evaluate (sut/command "move" {:member-sig "m:sig"
                                              :elapsed-since-presence-ms 900
                                              :observed-latency-ms 400})
                         AUTHORIZED)]
-    (is (clojure.string/includes? (:reason v) "deadman"))))
+    (is (kotoba.lang.text/includes? (:reason v) "deadman"))))
 
 (deftest test-estop-always-honoured-without-signature
   (let [v (sut/evaluate (sut/command "estop") AUTHORIZED)]

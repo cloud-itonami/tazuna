@@ -30,7 +30,7 @@
 
   Pure + portable (`.cljc`): no I/O, no host types, so it runs wherever the
   reasoner and the state machine run."
-  (:require [clojure.string :as str]))
+  (:require [kotoba.lang.text :as str]))
 
 ;; ── the catalogue ────────────────────────────────────────────────────────────
 ;; :kernel-code — the integer this kind carries across the `methods/

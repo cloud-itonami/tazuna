@@ -14,7 +14,7 @@
 
   Errors are ex-info maps tagged `:error` ∈ {:force-class :transparent-force
   :no-server-key :value-error} (mirroring the Python exception subclasses)."
-  (:require [clojure.string :as str]))
+  (:require [kotoba.lang.text :as str]))
 
 (def ADMITTED-FORCE-CLASSES #{"observational" "soft-actuation" "powered-actuation"})
 (def ALWAYS-PERMITTED #{"halt" "estop" "handback"})   ; safety commands; never gated/signed
