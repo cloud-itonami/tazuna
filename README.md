@@ -31,8 +31,8 @@ is admitted only inside three load-bearing invariants:
   budget force a safe-stop/autonomy-fallback; safety-rated + hard-RT live actuation near humans is
   R5/Lv7+.
 
-**Where admission is decided.** One place: `src/tazuna/governor.cljc`, adjudicating against the
-command catalogue in `src/tazuna/operation.cljc`. It is deny-by-default — a command kind the
+**Where admission is decided.** One place: `src/tazuna/governor.kotoba`, adjudicating against the
+command catalogue in `src/tazuna/operation.kotoba`. It is deny-by-default — a command kind the
 catalogue does not name is refused, so N1's "weaponizable is unrepresentable" is a property of the
 vocabulary rather than a list of forbidden words. The refusal order mirrors
 `methods/teleop_safety.kotoba`, the canonical kernel, and each refusal carries that kernel's code
@@ -66,13 +66,13 @@ Open-RMF (Apache-2.0), and the Boston Dynamics Orbit REST/gRPC call *shapes* as 
 ## Build / test
 
 ```
-clojure -Sdeps '{:paths ["." "src" "test"]}' -M -e '(load-file "run_tests.clj")'   # all 6 suites
+clojure -Sdeps '{:paths ["." "src" "test"]}' -M -e '(load-file "run_tests.kotoba")'   # all 6 suites
 clojure -M:lint                                                                    # clj-kondo
 ```
 
 `clojure -M:test` alone runs only the two `*-test` namespaces the cognitect runner
 matches under `test/`; the charter-gate, reasoner and state-machine suites are
-reached through `run_tests.clj`, which names all six explicitly.
+reached through `run_tests.kotoba`, which names all six explicitly.
 
 R0 = design + the `teleop_safety` reasoner + the `teleop_session` state-machine + a `:representative`
 fleet seed. **No hardware, no live robot link, no live actuation** — every adapter call is gated

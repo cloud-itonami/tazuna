@@ -9,7 +9,7 @@ policy:
   jvm_runtime_required: false
 
 paths:
-  - from: src/tazuna/murakumo.cljc
+  - from: src/tazuna/murakumo.kotoba
     to: src/tazuna/murakumo.kotoba
     disposition: kotoba
     status: blocked
@@ -66,7 +66,7 @@ paths:
     reason: Babashka/Clojure test; its own run instruction already names the .clj contract.
 
   - from: test/tazuna/murakumo_test.cljc
-    to: test/tazuna/murakumo_test.clj
+    to: test/tazuna/murakumo_test.kotoba
     disposition: clj
     status: migrated
     reason: Repository-native clojure.test suite loaded through the :test alias.
