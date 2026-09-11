@@ -73,13 +73,13 @@ paths:
 
 verification:
   required:
-    - clojure -M:test
+    - kbb -M:test
     - >-
-      bb -e '(load-file "cells/teleop_session/state_machine.cljc")
+      kbb -e '(load-file "cells/teleop_session/state_machine.cljc")
       (load-file "cells/teleop_session/test_state_machine.clj")
       (clojure.test/run-tests (quote tazuna.cells.teleop-session.test-state-machine))'
     - >-
-      bb -e '(load-file "methods/teleop_safety.clj")
+      kbb -e '(load-file "methods/teleop_safety.clj")
       (load-file "methods/test_teleop_safety.clj")
       (clojure.test/run-tests (quote tazuna.methods.test-teleop-safety))'
     - kotoba check methods/teleop_safety.kotoba --json
@@ -87,7 +87,7 @@ verification:
     - node --check teleop_safety.mjs
     - node -e 'import("./teleop_safety.mjs").then(async m => console.log(await m.instantiateKotoba().main()))'
     - >-
-      bb -e '(load-file "methods/test_charter_gates.clj")
+      kbb -e '(load-file "methods/test_charter_gates.clj")
       (clojure.test/run-tests (quote tazuna.methods.test-charter-gates))'
   kotoba_release_tested: 0.6.2
   notes:
