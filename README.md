@@ -66,11 +66,11 @@ Open-RMF (Apache-2.0), and the Boston Dynamics Orbit REST/gRPC call *shapes* as 
 ## Build / test
 
 ```
-clojure -Sdeps '{:paths ["." "src" "test"]}' -M -e '(load-file "run_tests.kotoba")'   # all 6 suites
-clojure -M:lint                                                                    # clj-kondo
+kbb -Sdeps '{:paths ["." "src" "test"]}' -M -e '(load-file "run_tests.kotoba")'   # all 6 suites
+kbb -M:lint                                                                    # clj-kondo
 ```
 
-`clojure -M:test` alone runs only the two `*-test` namespaces the cognitect runner
+`kbb -M:test` alone runs only the two `*-test` namespaces the cognitect runner
 matches under `test/`; the charter-gate, reasoner and state-machine suites are
 reached through `run_tests.kotoba`, which names all six explicitly.
 
